@@ -131,8 +131,11 @@ def _run_yt_dlp_captions(url: str, captions_dir: Path, log_path: Path) -> bool:
             f"captions rc={result.returncode}"
         )
         return result.returncode == 0
-    except Exception as e:
-        append_log(log_path, "yt-dlp", "FAIL", str(e))
+    except subprocess.TimeoutExpired:
+        append_log(log_path, "yt-dlp", "FAIL", "timeout after 120s")
+        return False
+    except OSError as e:
+        append_log(log_path, "yt-dlp", "FAIL", f"OS error: {e}")
         return False
 
 
