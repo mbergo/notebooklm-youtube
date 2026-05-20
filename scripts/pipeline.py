@@ -61,8 +61,12 @@ def run_pipeline(
 
         # 5. Frames
         if not no_frames and caps.ffmpeg:
-            extract_frames(vi, ctx, caps, video_file=None)
-            tools_used.append("ffmpeg")
+            video_file = Path(vi.raw) if vi.input_type == "local_file" else None
+            extract_frames(vi, ctx, caps, video_file=video_file)
+            if ctx.frames_dir.exists() and any(ctx.frames_dir.iterdir()):
+                tools_used.append("ffmpeg")
+            else:
+                tools_failed.append("ffmpeg")
         else:
             if no_frames:
                 append_log(log_path, "ffmpeg", "SKIP", "--no-frames flag")
