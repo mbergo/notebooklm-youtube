@@ -60,16 +60,16 @@ def run_pipeline(
             tools_failed.append("captions")
 
         # 5. Frames
-        if not no_frames and caps.ffmpeg:
-            video_file = Path(vi.raw) if vi.input_type == "local_file" else None
-            extract_frames(vi, ctx, caps, video_file=video_file)
-            if ctx.frames_dir.exists() and any(ctx.frames_dir.iterdir()):
-                tools_used.append("ffmpeg")
-            else:
-                tools_failed.append("ffmpeg")
+        if no_frames:
+            append_log(log_path, "ffmpeg", "SKIP", "--no-frames flag")
+        elif not caps.ffmpeg:
+            pass  # missing-tools.md already covers this
+        elif vi.input_type != "local_file":
+            append_log(log_path, "ffmpeg", "SKIP", "URL input — no local video file")
         else:
-            if no_frames:
-                append_log(log_path, "ffmpeg", "SKIP", "--no-frames flag")
+            video_file = Path(vi.raw)
+            if extract_frames(vi, ctx, caps, video_file=video_file):
+                tools_used.append("ffmpeg")
             else:
                 tools_failed.append("ffmpeg")
 

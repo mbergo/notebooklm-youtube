@@ -71,7 +71,7 @@ def normalize_inputs(raw: str) -> List[VideoInput]:
     input_type = classify_input(raw)
 
     if input_type == InputType.LOCAL_FILE:
-        path = Path(raw)
+        path = Path(raw).resolve()
         slug = make_slug(1, path.stem)
         return [VideoInput(raw=str(path), id_slug=slug, input_type="local_file")]
 

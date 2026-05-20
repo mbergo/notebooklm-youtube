@@ -38,22 +38,28 @@ def extract_frames(
     ctx: VideoContext,
     caps: CapabilityMap,
     video_file: Optional[Path],
-) -> None:
+) -> bool:
+    """Return True if frames were successfully extracted, False otherwise."""
     log_path = ctx.logs_dir / "frames.log"
 
     if not caps.ffmpeg:
         append_log(log_path, "ffmpeg", "SKIP", "not installed")
-        return
+        return False
 
     if video_file is None or not video_file.exists():
         append_log(log_path, "ffmpeg", "SKIP", "no video file available")
-        return
+        return False
 
     ctx.frames_dir.mkdir(parents=True, exist_ok=True)
     cmd = build_baseline_ffmpeg_cmd(video_file, ctx.frames_dir)
     try:
         result = subprocess.run(cmd, capture_output=True, text=True, timeout=600)
-        status = "OK" if result.returncode == 0 else "FAIL"
-        append_log(log_path, "ffmpeg", status, f"baseline frames rc={result.returncode}")
-    except Exception as e:
-        append_log(log_path, "ffmpeg", "FAIL", str(e))
+        success = result.returncode == 0
+        append_log(log_path, "ffmpeg", "OK" if success else "FAIL", f"baseline frames rc={result.returncode}")
+        return success
+    except subprocess.TimeoutExpired as e:
+        append_log(log_path, "ffmpeg", "FAIL", f"timeout after {e.timeout}s")
+        return False
+    except OSError as e:
+        append_log(log_path, "ffmpeg", "FAIL", f"OS error: {e}")
+        return False
